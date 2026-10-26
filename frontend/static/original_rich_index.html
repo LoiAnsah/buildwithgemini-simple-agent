@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hangout Hero Â· Toronto Outing & Map Itinerary</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS for Map Interface -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <style>
+    :root {
+      /* Notion / Warm Earthtone Palette */
+      --bg-cream: #fbf9f5;
+      --bg-warm: #f7f4ee;
+      --surface: #ffffff;
+      --surface-hover: #faf8f5;
+      --border-warm: #e8e2d8;
+      --border-subtle: #f0ece3;
+      
+      --text-main: #37352f;
+      --text-muted: #787774;
+      --text-subtle: #9b9a97;
+
+      --brown-deep: #4a3b32;
+      --brown-medium: #705848;
+      --brown-light: #9c8270;
+      
+      --terracotta: #c46d4e;
+      --terracotta-soft: #f4eae4;
+      --clay: #a35d46;
+      --sage: #5b7065;
+      --sage-soft: #eaf0ec;
+      --sand: #e6dfd3;
+      --sand-gold: #b38b59;
+      --amber-soft: #fdf3e7;
+      
+      --shadow-soft: 0 1px 3px rgba(55, 53, 47, 0.06), 0 4px 12px rgba(55, 53, 47, 0.04);
+      --shadow-hover: 0 4px 16px rgba(74, 59, 50, 0.08), 0 1px 4px rgba(74, 59, 50, 0.04);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-cream);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Notion Header */
+    header {
+      background: var(--bg-cream);
+      border-bottom: 1px solid var(--border-warm);
+      padding: 0.9rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+    .brand-avatar {
+      font-size: 1.5rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--sand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-warm);
+    }
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--brown-deep);
+      letter-spacing: -0.01em;
+    }
+    .brand-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .brand-subtitle .badge {
+      background: var(--sand);
+      color: var(--brown-medium);
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .brand-subtitle .loc-badge {
+      background: var(--sage-soft);
+      color: var(--sage);
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      background: var(--bg-warm);
+      padding: 0.25rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-warm);
+      gap: 0.2rem;
+    }
+
+    .tab-btn {
+      padding: 0.45rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.5);
+    }
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--brown-deep);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid var(--border-warm);
+    }
+
+    main {
+      flex: 1;
+      padding: 1.6rem 2rem 3rem;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.2s ease-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ========================================================= */
+    /* ITINERARY & MAP LAYOUT (NEW TAB) */
+    /* ========================================================= */
+    .itinerary-layout {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 1.6rem;
+      height: 720px;
+    }
+
+    .itinerary-sidebar {
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .itin-header {
+      padding: 1.2rem 1.4rem;
+      background: var(--bg-warm);
+      border-bottom: 1px solid var(--border-warm);
+    }
+    .itin-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+    .itin-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.25rem;
+      color: var(--brown-deep);
+      font-weight: 600;
+    }
+    .preset-selector {
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      border-radius: 6px;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.78rem;
+      color: var(--brown-deep);
+      outline: none;
+      font-family: inherit;
+    }
+
+    .itin-stats {
+      display: flex;
+      gap: 0.8rem;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+    }
+    .itin-stats span {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--border-warm);
+    }
+
+    .timeline-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 0.9rem;
+      position: relative;
+    }
+    .timeline-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 36px;
+      bottom: -20px;
+      width: 2px;
+      background: var(--border-warm);
+    }
+    .time-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--sand);
+      color: var(--brown-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      border: 2px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+      z-index: 2;
+    }
+    .timeline-card {
+      background: var(--bg-warm);
+      border: 1px solid var(--border-warm);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      flex: 1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .timeline-card:hover {
+      background: #fff;
+      border-color: var(--brown-light);
+      transform: translateX(2px);
+    }
+    .timeline-card.active {
+      background: #fff;
+      border-color: var(--terracotta);
+      box-shadow: 0 2px 8px rgba(196, 109, 78, 0.15);
+    }
+    .timeline-role {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.2rem;
+    }
+    .role-morning { color: #b38b59; }
+    .role-lunch { color: var(--terracotta); }
+    .role-afternoon { color: var(--sage); }
+    .role-dinner { color: var(--brown-deep); }
+
+    .timeline-spot-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--brown-deep);
+      margin-bottom: 0.25rem;
+    }
+    .timeline-spot-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 0.4rem;
+    }
+    .timeline-spot-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--brown-medium);
+      border-top: 1px dashed var(--border-warm);
+      padding-top: 0.4rem;
+    }
+
+    /* Transit gap indicator between activities */
+    .transit-gap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      color: var(--text-subtle);
+      margin: -0.4rem 0 -0.4rem 45px;
+      font-style: italic;
+    }
+
+    .map-container {
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+    }
+    #torontoMap {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .map-legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(4px);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-warm);
+      font-size: 0.75rem;
+      color: var(--brown-deep);
+      z-index: 500;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* ========================================================= */
+    /* ACTIVITIES & CALENDAR STYLES */
+    /* ========================================================= */
+    .filter-panel {
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.8rem;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .filter-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .filter-row-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      min-width: 110px;
+    }
+    .chip {
+      padding: 0.32rem 0.75rem;
+      border-radius: 6px;
+      background: var(--bg-warm);
+      color: var(--text-muted);
+      border: 1px solid var(--border-warm);
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .chip:hover {
+      background: var(--surface-hover);
+      color: var(--text-main);
+      border-color: var(--brown-light);
+    }
+    .chip.active {
+      background: var(--terracotta-soft);
+      color: var(--terracotta);
+      border-color: #e2c0b4;
+      font-weight: 600;
+    }
+
+    .activities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.4rem;
+    }
+    .act-card {
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      border-radius: 10px;
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--shadow-soft);
+      transition: all 0.2s ease;
+    }
+    .act-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--brown-light);
+    }
+    .act-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    .act-cat {
+      background: var(--sand);
+      color: var(--brown-deep);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+    }
+    .act-season {
+      background: var(--terracotta-soft);
+      color: var(--terracotta);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+    }
+    .act-neigh {
+      font-size: 0.75rem;
+      color: var(--sage);
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .act-title {
+      font-size: 1.08rem;
+      font-weight: 600;
+      color: var(--brown-deep);
+      margin-bottom: 0.45rem;
+      line-height: 1.35;
+    }
+    .act-desc {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 1.1rem;
+    }
+    .act-meta {
+      display: flex;
+      gap: 0.9rem;
+      font-size: 0.78rem;
+      color: var(--brown-medium);
+      padding: 0.65rem 0;
+      border-top: 1px dashed var(--border-warm);
+      margin-bottom: 1rem;
+    }
+    .act-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .act-links-group {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+    .act-link {
+      color: var(--terracotta);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .act-link:hover { text-decoration: underline; color: var(--clay); }
+    .map-link {
+      color: var(--sage);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .map-link:hover { text-decoration: underline; }
+    .plan-this-btn {
+      background: var(--brown-deep);
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .plan-this-btn:hover { background: var(--brown-medium); }
+
+    /* Calendar Section */
+    .calendar-container {
+      display: grid;
+      grid-template-columns: 310px 1fr;
+      gap: 1.6rem;
+    }
+    .today-panel {
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      border-radius: 10px;
+      padding: 1.4rem;
+      box-shadow: var(--shadow-soft);
+      height: fit-content;
+    }
+    .notion-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--sage-soft);
+      color: var(--sage);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.85rem;
+    }
+    .focus-date {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.35rem;
+      color: var(--brown-deep);
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+    }
+    .weather-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--amber-soft);
+      color: var(--sand-gold);
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin: 0.8rem 0;
+      border: 1px solid #fae6cb;
+    }
+    .calendar-grid-card {
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      border-radius: 10px;
+      padding: 1.4rem;
+      box-shadow: var(--shadow-soft);
+    }
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .schedule-table th, .schedule-table td {
+      padding: 0.85rem 0.9rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .schedule-table th {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .status-free { background: var(--sage-soft); color: var(--sage); }
+    .status-busy { background: #fbeee9; color: var(--terracotta); }
+    .status-mutual {
+      background: var(--terracotta);
+      color: #fff;
+      font-weight: 600;
+      border-radius: 4px;
+    }
+
+    /* Chat Section */
+    .chat-layout {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      height: 640px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+    .chat-header {
+      padding: 0.9rem 1.4rem;
+      background: var(--bg-warm);
+      border-bottom: 1px solid var(--border-warm);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      background: var(--bg-cream);
+    }
+    .chat-bubble {
+      max-width: 85%;
+      padding: 0.85rem 1.15rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+    .user-bubble {
+      align-self: flex-end;
+      background: var(--brown-deep);
+      color: #ffffff;
+      border-bottom-right-radius: 2px;
+    }
+    .agent-bubble {
+      align-self: flex-start;
+      background: var(--surface);
+      border: 1px solid var(--border-warm);
+      color: var(--text-main);
+      box-shadow: var(--shadow-soft);
+      border-bottom-left-radius: 2px;
+    }
+    .chat-form {
+      padding: 0.9rem 1.2rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border-warm);
+      display: flex;
+      gap: 0.6rem;
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--bg-warm);
+      border: 1px solid var(--border-warm);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .chat-submit {
+      background: var(--brown-deep);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.3rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .chat-submit:hover { background: var(--brown-medium); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-avatar">ð</div>
+    <div>
+      <h1 class="brand-title">Hangout Hero</h1>
+      <div class="brand-subtitle">
+        <span class="loc-badge">ð Toronto, ON</span>
+        <span>Map Itinerary & Shared Calendar</span>
+        <span class="badge">Gemini 3.8</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('itinerary')">
+      <span>ðºï¸</span> Day Itinerary & Map
+    </button>
+    <button class="tab-btn" onclick="switchTab('activities')">
+      <span>ð¿</span> Browse Activities
+    </button>
+    <button class="tab-btn" onclick="switchTab('calendar')">
+      <span>ðï¸</span> Combined Calendar
+    </button>
+    <button class="tab-btn" onclick="switchTab('chat')">
+      <span>â</span> Concierge Chat
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- TAB 1: ITINERARY & INTERACTIVE MAP INTERFACE -->
+  <section id="tab-itinerary" class="tab-content active">
+    <div class="itinerary-layout">
+      
+      <!-- Timeline Sidebar -->
+      <div class="itinerary-sidebar">
+        <div class="itin-header">
+          <div class="itin-title-row">
+            <h3 class="itin-title">Planned Outing Route</h3>
+            <select class="preset-selector" id="itinerarySelector" onchange="changeItineraryPreset(this.value)">
+              <option value="active_wellness">ð§ Active & Wellness Flow</option>
+              <option value="climb_comedy">ð§ Climb & Comedy Night</option>
+              <option value="ceramic_cozy">ðº Ceramics & Cozy Salons</option>
+            </select>
+          </div>
+          <div class="itin-stats">
+            <span>ð Sat, Oct 31, 2026</span>
+            <span>ð Downtown & Queen West</span>
+            <span>ð¶ ~12 min walk between stops</span>
+          </div>
+        </div>
+
+        <div class="timeline-container" id="timelineContainer">
+          <!-- Dynamically populated timeline stops -->
+        </div>
+      </div>
+
+      <!-- Live OpenStreetMap / Leaflet Map -->
+      <div class="map-container">
+        <div id="torontoMap"></div>
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#b38b59;"></span> 1. Morning Activity</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#c46d4e;"></span> 2. Lunch / Refuel</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#5b7065;"></span> 3. Afternoon / Stroll</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#4a3b32;"></span> 4. Dinner / Evening Show</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TAB 2: ACTIVITIES BROWSER -->
+  <section id="tab-activities" class="tab-content">
+    <div class="filter-panel">
+      <div class="filter-row">
+        <span class="filter-row-title">Categories:</span>
+        <button class="chip active" data-cat="all" onclick="toggleCategory('all')">â¨ All</button>
+        <button class="chip" data-cat="Pilates" onclick="toggleCategory('Pilates')">ð§ Pilates</button>
+        <button class="chip" data-cat="Climbing" onclick="toggleCategory('Climbing')">ð§ Climbing</button>
+        <button class="chip" data-cat="Pottery" onclick="toggleCategory('Pottery')">ðº Pottery</button>
+        <button class="chip" data-cat="Reading" onclick="toggleCategory('Reading')">ð Book Cafes</button>
+        <button class="chip" data-cat="Shows" onclick="toggleCategory('Shows')">ð­ Comedy/Shows</button>
+        <button class="chip" data-cat="Nature" onclick="toggleCategory('Nature')">ð Nature/Trails</button>
+        <button class="chip" data-cat="Culture" onclick="toggleCategory('Culture')">ð Historic Strolls</button>
+      </div>
+
+      <div class="filter-row">
+        <span class="filter-row-title">Setting:</span>
+        <button class="chip active" data-type="all" onclick="filterSetting('all')">All Settings</button>
+        <button class="chip" data-type="indoor" onclick="filterSetting('indoor')">ð  Indoor (Weatherproof)</button>
+        <button class="chip" data-type="outdoor" onclick="filterSetting('outdoor')">ð² Outdoor / Crisp Air</button>
+      </div>
+
+      <div class="filter-row">
+        <span class="filter-row-title">Neighbourhood:</span>
+        <button class="chip active" data-neigh="all" onclick="filterNeigh('all')">All GTA</button>
+        <button class="chip" data-neigh="Downtown" onclick="filterNeigh('Downtown')">Downtown / The Well</button>
+        <button class="chip" data-neigh="Queen West" onclick="filterNeigh('Queen West')">Queen West</button>
+        <button class="chip" data-neigh="Yorkville" onclick="filterNeigh('Yorkville')">Yorkville</button>
+        <button class="chip" data-neigh="Leslieville" onclick="filterNeigh('Leslieville')">East End / Leslieville</button>
+        <button class="chip" data-neigh="Don Valley" onclick="filterNeigh('Don Valley')">Don Valley</button>
+      </div>
+    </div>
+
+    <div class="activities-grid" id="activitiesGrid"></div>
+  </section>
+
+  <!-- TAB 3: CALENDAR -->
+  <section id="tab-calendar" class="tab-content">
+    <div class="calendar-container">
+      <div class="today-panel">
+        <div class="notion-tag">ð Next Mutual Match</div>
+        <div class="focus-date">Saturday, Oct 31</div>
+        <p style="font-size: 0.82rem; color: var(--text-muted);">Both friends free all day in Toronto!</p>
+        
+        <div class="weather-pill">
+          âï¸ 13.5Â°C (56Â°F) Â· Crisp Autumn Sun & Lake Breeze
+        </div>
+
+        <div style="background: var(--bg-warm); border: 1px solid var(--border-warm); border-radius: 8px; padding: 1rem; margin-top: 0.8rem;">
+          <div style="font-size: 0.72rem; color: var(--terracotta); font-weight: 700; text-transform: uppercase;">Confirmed Toronto Plan</div>
+          <h3 style="font-size: 0.98rem; margin: 0.35rem 0 0.45rem; color: var(--brown-deep);">Sweat & Tonic + Queen West Stroll</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+            Morning athletic reformer session at The Well, followed by warm spiced tonics and exploring Queen West galleries.
+          </p>
+        </div>
+      </div>
+
+      <div class="calendar-grid-card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:1.2rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.8rem;">
+          <div>
+            <h3 style="font-size: 1.15rem; color: var(--brown-deep); font-weight: 600;">Toronto Availability Matrix</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Synchronized calendar slots for upcoming weekends</p>
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-subtle); font-family: 'JetBrains Mono', monospace;">Toronto, ON Â· EST</span>
+        </div>
+
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amalois Status</th>
+              <th>Lois Status</th>
+              <th>Mutual Overlap</th>
+              <th>Toronto Itinerary / Note</th>
+            </tr>
+          </thead>
+          <tbody id="calendarTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: CHAT -->
+  <section id="tab-chat" class="tab-content">
+    <div class="chat-layout">
+      <div class="chat-header">
+        <span style="font-size: 1.2rem;">â</span>
+        <div>
+          <h4 style="font-size: 0.9rem; color: var(--brown-deep); font-weight: 600;">Toronto Outing Concierge</h4>
+          <p style="font-size: 0.74rem; color: var(--text-muted);">Root Coordinator delegating to Calendar, Weather & Activity Agents</p>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-bubble agent-bubble">
+Hello from Toronto! ð I am your **Outing Concierge**. 
+
+I can plan complete multi-stop itineraries (First activity â¡ï¸ Lunch/Coffee â¡ï¸ Afternoon Stroll â¡ï¸ Dinner/Show) with walking distance calculations and interactive maps!
+
+Check the **Day Itinerary & Map** tab to see your planned route, or ask me to switch stops!
+        </div>
+      </div>
+      <form class="chat-form" id="chatForm">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Ask to plan a day itinerary, check walking distance, or switch restaurants..." autocomplete="off">
+        <button type="submit" class="chat-submit">Send</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<script>
+  let map, polylineLayer;
+  let markers = [];
+  let allActivities = [];
+  let selectedCategory = 'all', selectedSetting = 'all', selectedNeigh = 'all';
+
+  // Curated Toronto Itinerary Presets with Geocoded Coordinates
+  const ITINERARIES = {
+    active_wellness: [
+      {
+        step: 1,
+        role: "Morning Activity",
+        roleClass: "role-morning",
+        time: "10:00 AM",
+        title: "Sweat and Tonic (The Well)",
+        desc: "Athletic reformer pilates session in the flagship Wellington St wellness studio.",
+        neigh: "The Well / Spadina",
+        lat: 43.6436,
+        lng: -79.3949,
+        link: "https://www.sweatandtonic.com"
+      },
+      {
+        step: 2,
+        role: "Healthy Lunch & Refuel",
+        roleClass: "role-lunch",
+        time: "11:45 AM",
+        title: "Impact Kitchen (King & Portland)",
+        desc: "Wholesome gluten-free bowls, bone broths, and fresh pressed seasonal juices.",
+        neigh: "King West (8 min walk from The Well)",
+        lat: 43.6449,
+        lng: -79.4005,
+        link: "https://www.impactkitchen.ca"
+      },
+      {
+        step: 3,
+        role: "Afternoon Stroll & Chill",
+        roleClass: "role-afternoon",
+        time: "1:30 PM",
+        title: "Queen West Indie Galleries & Trinity Bellwoods",
+        desc: "Brisk autumn stroll past independent local art galleries and vintage design shops.",
+        neigh: "Queen West / Bellwoods",
+        lat: 43.6473,
+        lng: -79.4128,
+        link: "https://queenwest.org"
+      },
+      {
+        step: 4,
+        role: "Cozy Dinner & Drinks",
+        roleClass: "role-dinner",
+        time: "6:00 PM",
+        title: "Terroni (Queen West)",
+        desc: "Classic wood-fired southern Italian pizzas, handmade pastas, and warm ambiance.",
+        neigh: "720 Queen St W",
+        lat: 43.6465,
+        lng: -79.4082,
+        link: "https://www.terroni.com"
+      }
+    ],
+
+    climb_comedy: [
+      {
+        step: 1,
+        role: "Morning Activity",
+        roleClass: "role-morning",
+        time: "11:00 AM",
+        title: "Basecamp Climbing Gym",
+        desc: "Bouldering session with community chill zones and paired climb challenges.",
+        neigh: "Bloor & Christie / Annex",
+        lat: 43.6672,
+        lng: -79.4189,
+        link: "https://basecampclimbing.ca"
+      },
+      {
+        step: 2,
+        role: "Casual Lunch",
+        roleClass: "role-lunch",
+        time: "1:15 PM",
+        title: "Ramen Isshin (College & Bathurst)",
+        desc: "Rich piping hot red miso ramen bowls to warm up after a heavy climb.",
+        neigh: "Little Italy / College St",
+        lat: 43.6552,
+        lng: -79.4075,
+        link: "https://www.ramenisshin.com"
+      },
+      {
+        step: 3,
+        role: "Afternoon Reading & Coffee",
+        roleClass: "role-afternoon",
+        time: "3:00 PM",
+        title: "Flying Books & Espresso Lounge",
+        desc: "Sip flat whites while browsing curated indie novels beside sunlit brick walls.",
+        neigh: "784 College St",
+        lat: 43.6548,
+        lng: -79.4215,
+        link: "https://flyingbooks.ca"
+      },
+      {
+        step: 4,
+        role: "Evening Show & Cocktails",
+        roleClass: "role-dinner",
+        time: "7:30 PM",
+        title: "The Second City Toronto Comedy Revue",
+        desc: "Live improv and sketch comedy showcase at 1 York St with drinks.",
+        neigh: "Downtown / Financial District",
+        lat: 43.6428,
+        lng: -79.3813,
+        link: "https://www.secondcity.com/toronto"
+      }
+    ],
+
+    ceramic_cozy: [
+      {
+        step: 1,
+        role: "Morning Activity",
+        roleClass: "role-morning",
+        time: "10:30 AM",
+        title: "Gardiner Museum Clay Studios",
+        desc: "Hands-on wheel throwing pottery class shaping customized ceramic bowls & mugs.",
+        neigh: "Yorkville / Museum Station",
+        lat: 43.6681,
+        lng: -79.3927,
+        link: "https://www.gardinermuseum.on.ca/clay-studios"
+      },
+      {
+        step: 2,
+        role: "Yorkville Lunch",
+        roleClass: "role-lunch",
+        time: "1:00 PM",
+        title: "Sassafraz (Yorkville)",
+        desc: "Iconic little yellow house in Yorkville with French-inspired autumn bistro fare.",
+        neigh: "100 Cumberland St",
+        lat: 43.6702,
+        lng: -79.3908,
+        link: "https://www.sassafraz.ca"
+      },
+      {
+        step: 3,
+        role: "Afternoon Cobblestone Walk",
+        roleClass: "role-afternoon",
+        time: "3:30 PM",
+        title: "Distillery District Fall Stroll",
+        desc: "Explore historic 19th-century Victorian lanes and artisan hot chocolate at Soma.",
+        neigh: "Distillery Historic District",
+        lat: 43.6503,
+        lng: -79.3596,
+        link: "https://www.thedistillerydistrict.com"
+      },
+      {
+        step: 4,
+        role: "Evening Dinner",
+        roleClass: "role-dinner",
+        time: "6:30 PM",
+        title: "El Catrin Destileria",
+        desc: "Traditional Mexican tapas and margaritas beside a stunning vibrant courtyard mural.",
+        neigh: "Distillery District",
+        lat: 43.6508,
+        lng: -79.3592,
+        link: "https://www.elcatrin.ca"
+      }
+    ]
+  };
+
+  function initMap() {
+    // Center around Downtown Toronto
+    map = L.map('torontoMap').setView([43.6500, -79.3900], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Â© OpenStreetMap contributors',
+      maxZoom: 18
+    }).addTo(map);
+
+    renderItinerary('active_wellness');
+  }
+
+  function changeItineraryPreset(presetKey) {
+    renderItinerary(presetKey);
+  }
+
+  function renderItinerary(presetKey) {
+    const stops = ITINERARIES[presetKey] || ITINERARIES.active_wellness;
+    const container = document.getElementById('timelineContainer');
+    container.innerHTML = '';
+
+    // Clear old map markers & route line
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    if (polylineLayer) map.removeLayer(polylineLayer);
+
+    const latLngs = [];
+
+    stops.forEach((stop, index) => {
+      // Timeline HTML
+      const item = document.createElement('div');
+      item.className = 'timeline-item';
+      item.innerHTML = `
+        <div class="time-badge">${stop.step}</div>
+        <div class="timeline-card" id="card-${index}" onclick="focusStop(${index}, ${stop.lat}, ${stop.lng})">
+          <div class="timeline-role ${stop.roleClass}">${stop.time} Â· ${stop.role}</div>
+          <div class="timeline-spot-title">${stop.title}</div>
+          <div class="timeline-spot-desc">${stop.desc}</div>
+          <div class="timeline-spot-meta">
+            <span>ð ${stop.neigh}</span>
+            <a href="${stop.link}" target="_blank" style="color:var(--terracotta); text-decoration:none; font-weight:600;">Details â</a>
+          </div>
+        </div>
+      `;
+      container.appendChild(item);
+
+      // Transit gap between stops
+      if (index < stops.length - 1) {
+        const next = stops[index + 1];
+        const gap = document.createElement('div');
+        gap.className = 'transit-gap';
+        gap.innerHTML = `ð¶ ~8â12 min stroll / transit to next stop`;
+        container.appendChild(gap);
+      }
+
+      // Add Map Marker
+      const latLng = [stop.lat, stop.lng];
+      latLngs.push(latLng);
+
+      const marker = L.marker(latLng).addTo(map);
+      marker.bindPopup(`
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; min-width:180px;">
+          <div style="font-size:0.75rem; font-weight:700; color:#c46d4e; text-transform:uppercase;">Stop ${stop.step}: ${stop.role}</div>
+          <strong style="font-size:0.95rem; color:#4a3b32;">${stop.title}</strong>
+          <p style="font-size:0.8rem; margin:0.3rem 0; color:#787774;">${stop.desc}</p>
+          <div style="font-size:0.75rem; color:#5b7065;">â° ${stop.time} Â· ð ${stop.neigh}</div>
+        </div>
+      `);
+      marker.on('click', () => {
+        highlightCard(index);
+      });
+      markers.push(marker);
+    });
+
+    // Draw route polyline connecting the itinerary stops
+    polylineLayer = L.polyline(latLngs, {
+      color: '#c46d4e',
+      weight: 4,
+      opacity: 0.8,
+      dashArray: '8, 8'
+    }).addTo(map);
+
+    // Fit map bounds to encompass all stops
+    if (latLngs.length > 0) {
+      map.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40] });
+    }
+  }
+
+  function focusStop(index, lat, lng) {
+    highlightCard(index);
+    map.setView([lat, lng], 15);
+    markers[index].openPopup();
+  }
+
+  function highlightCard(index) {
+    document.querySelectorAll('.timeline-card').forEach(c => c.classList.remove('active'));
+    const active = document.getElementById(`card-${index}`);
+    if (active) active.classList.add('active');
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+    event.currentTarget.classList.add('active');
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+
+    if (tabId === 'itinerary' && map) {
+      setTimeout(() => map.invalidateSize(), 150);
+    }
+  }
+
+  // Activities, Calendar & Chat logic
+  async function loadActivities() {
+    try {
+      const res = await fetch('/api/activities');
+      const data = await res.json();
+      allActivities = data.activities || [];
+      applyFilters();
+    } catch (e) { console.error(e); }
+  }
+
+  function toggleCategory(cat) {
+    selectedCategory = cat;
+    document.querySelectorAll('[data-cat]').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-cat="${cat}"]`).classList.add('active');
+    applyFilters();
+  }
+
+  function filterSetting(type) {
+    selectedSetting = type;
+    document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-type="${type}"]`).classList.add('active');
+    applyFilters();
+  }
+
+  function filterNeigh(neigh) {
+    selectedNeigh = neigh;
+    document.querySelectorAll('[data-neigh]').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-neigh="${neigh}"]`).classList.add('active');
+    applyFilters();
+  }
+
+  function applyFilters() {
+    let filtered = allActivities;
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(a => a.category.toLowerCase().includes(selectedCategory.toLowerCase()) || a.title.toLowerCase().includes(selectedCategory.toLowerCase()));
+    }
+    if (selectedSetting !== 'all') {
+      filtered = filtered.filter(a => a.type.toLowerCase().includes(selectedSetting.toLowerCase()));
+    }
+    if (selectedNeigh !== 'all') {
+      filtered = filtered.filter(a => a.neighborhood && a.neighborhood.toLowerCase().includes(selectedNeigh.toLowerCase()));
+    }
+    renderActivities(filtered);
+  }
+
+  function renderActivities(list) {
+    const grid = document.getElementById('activitiesGrid');
+    grid.innerHTML = '';
+    list.forEach(act => {
+      const gmapsQuery = encodeURIComponent(`${act.title} ${act.address || 'Toronto'}`);
+      const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${gmapsQuery}`;
+      const card = document.createElement('div');
+      card.className = 'act-card';
+      card.innerHTML = `
+        <div>
+          <div class="act-header">
+            <span class="act-cat">ð ${act.category}</span>
+            <span class="act-season">ð ${act.season}</span>
+          </div>
+          <div class="act-neigh">ð ${act.neighborhood || 'Toronto, ON'}</div>
+          <h3 class="act-title">${act.title}</h3>
+          <p class="act-desc">${act.description}</p>
+        </div>
+        <div>
+          <div class="act-meta">
+            <span>â±ï¸ ${act.duration}</span>
+            <span>â¨ ${act.vibe}</span>
+          </div>
+          <div class="act-footer">
+            <div class="act-links-group">
+              <a href="${act.link}" target="_blank" class="act-link">Website â</a>
+              <span style="color: #e8e2d8;">Â·</span>
+              <a href="${gmapsUrl}" target="_blank" class="map-link">Google Maps â</a>
+            </div>
+            <button class="plan-this-btn" onclick="askAgentToPlan('${act.title}')">Plan This ðª</button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  async function loadCalendar() {
+    try {
+      const res = await fetch('/api/calendar');
+      const data = await res.json();
+      const tbody = document.getElementById('calendarTableBody');
+      tbody.innerHTML = '';
+      const dates = ['2026-10-31', '2026-11-01', '2026-11-07', '2026-11-08'];
+      const c1 = data.calendars['amalois2003@gmail.com'] || [];
+      const c2 = data.calendars['loiscodes@gmail.com'] || [];
+
+      dates.forEach(d => {
+        const s1 = c1.find(x => x.date === d) || { status: 'free', window: 'all_day' };
+        const s2 = c2.find(x => x.date === d) || { status: 'free', window: 'all_day' };
+        const isMutual = s1.status === 'free' && s2.status === 'free';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>${d}</strong> <br><span style="font-size:0.72rem; color:#8c827a;">${s1.day || ''}</span></td>
+          <td><span class="status-badge ${s1.status === 'free' ? 'status-free' : 'status-busy'}">${s1.status === 'free' ? 'â Free' : 'â Busy'}</span></td>
+          <td><span class="status-badge ${s2.status === 'free' ? 'status-free' : 'status-busy'}">${s2.status === 'free' ? 'â Free' : 'â Busy'}</span></td>
+          <td>${isMutual ? `<span class="status-badge status-mutual">â¨ Mutual Match</span>` : `<span style="font-size:0.75rem; color:#a8a29e;">No overlap</span>`}</td>
+          <td style="font-size: 0.82rem; color: #57534e;">${s1.planned || s1.reason || s2.reason || 'Open for booking'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    } catch (e) { console.error(e); }
+  }
+
+  // Chat
+  const chatForm = document.getElementById('chatForm');
+  const chatInput = document.getElementById('chatInput');
+  const chatMessages = document.getElementById('chatMessages');
+
+  function askAgentToPlan(activityName) {
+    switchTab('chat');
+    chatInput.value = `Can you build an itinerary starting with "${activityName}", suggest a nearby lunch spot, and show how close they are?`;
+    chatForm.dispatchEvent(new Event('submit'));
+  }
+
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble user-bubble';
+    userBubble.textContent = text;
+    chatMessages.appendChild(userBubble);
+    chatInput.value = '';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    const agentBubble = document.createElement('div');
+    agentBubble.className = 'chat-bubble agent-bubble';
+    agentBubble.textContent = 'Orchestrating itinerary and proximity with Toronto agents...';
+    chatMessages.appendChild(agentBubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+      const data = await res.json();
+      agentBubble.textContent = data.reply || 'No response';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    } catch (err) {
+      agentBubble.textContent = 'Error connecting to agent: ' + err.message;
+    }
+  });
+
+  // Init
+  window.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    loadActivities();
+    loadCalendar();
+  });
+</script>
+</body>
+</html>
